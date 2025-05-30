@@ -111,6 +111,14 @@ class BedrockConverse(FunctionCallingLLM):
         description="Whether or not to use SSL. By default, SSL is used. Note that not all services support non-ssl connections.",
         exclude=True,
     )
+    use_system_cache: bool = Field(
+        description="Whether or not to use the system cache. By default, the system cache is not used.",
+        exclude=True,
+    )
+    use_tool_cache: bool = Field(
+        description="Whether or not to use the tool cache. By default, the tool cache is not used.",
+        exclude=True,
+    )
     verify: Optional[Union[bool, str]] = Field(
         description="Whether or not to verify SSL certificates. By default SSL certificates are verified.",
         exclude=True,
@@ -189,6 +197,8 @@ class BedrockConverse(FunctionCallingLLM):
         guardrail_identifier: Optional[str] = None,
         guardrail_version: Optional[str] = None,
         application_inference_profile_arn: Optional[str] = None,
+        use_system_cache: bool = False,
+        use_tool_cache: bool = False,
         trace: Optional[str] = None,
     ) -> None:
         additional_kwargs = additional_kwargs or {}
@@ -230,6 +240,8 @@ class BedrockConverse(FunctionCallingLLM):
             guardrail_identifier=guardrail_identifier,
             guardrail_version=guardrail_version,
             application_inference_profile_arn=application_inference_profile_arn,
+            use_system_cache=use_system_cache,
+            use_tool_cache=use_tool_cache,
             trace=trace,
         )
 
@@ -366,6 +378,7 @@ class BedrockConverse(FunctionCallingLLM):
             guardrail_identifier=self.guardrail_identifier,
             guardrail_version=self.guardrail_version,
             trace=self.trace,
+            use_system_cache=self.use_system_cache,
             **all_kwargs,
         )
 
@@ -412,6 +425,7 @@ class BedrockConverse(FunctionCallingLLM):
             guardrail_identifier=self.guardrail_identifier,
             guardrail_version=self.guardrail_version,
             trace=self.trace,
+            use_system_cache=self.use_system_cache,
             **all_kwargs,
         )
 
@@ -524,6 +538,7 @@ class BedrockConverse(FunctionCallingLLM):
             guardrail_version=self.guardrail_version,
             trace=self.trace,
             boto_client_kwargs=self._boto_client_kwargs,
+            use_system_cache=self.use_system_cache,
             **all_kwargs,
         )
 
@@ -572,6 +587,7 @@ class BedrockConverse(FunctionCallingLLM):
             guardrail_version=self.guardrail_version,
             trace=self.trace,
             boto_client_kwargs=self._boto_client_kwargs,
+            use_system_cache=self.use_system_cache,
             **all_kwargs,
         )
 
@@ -689,6 +705,9 @@ class BedrockConverse(FunctionCallingLLM):
             # https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ToolChoice.html
             # e.g. { "auto": {} }
             tool_config["toolChoice"] = tool_choice
+
+        if self.use_tool_cache:
+            tool_config["tools"].append({"cachePoint": {"type": "default"}})
 
         return {
             "messages": chat_history,

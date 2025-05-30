@@ -283,6 +283,11 @@ def messages_to_converse_messages(
                 )
                 if bedrock_format_block:
                     content.append(bedrock_format_block)
+                if (
+                    "cachePoint" in message.additional_kwargs
+                    or "cache_control" in message.additional_kwargs
+                ):
+                    content.append({"cachePoint": {"type": "default"}})
 
             if content:
                 converse_messages.append(
@@ -416,6 +421,7 @@ def converse_with_retry(
     guardrail_identifier: Optional[str] = None,
     guardrail_version: Optional[str] = None,
     trace: Optional[str] = None,
+    use_system_cache: bool = False,
     **kwargs: Any,
 ) -> Any:
     """Use tenacity to retry the completion call."""
@@ -430,6 +436,8 @@ def converse_with_retry(
     }
     if system_prompt:
         converse_kwargs["system"] = [{"text": system_prompt}]
+        if use_system_cache:
+            converse_kwargs["system"].append({"cachePoint": {"type": "default"}})
     if tool_config := kwargs.get("tools"):
         converse_kwargs["toolConfig"] = tool_config
     if guardrail_identifier and guardrail_version:
@@ -470,6 +478,7 @@ async def converse_with_retry_async(
     guardrail_version: Optional[str] = None,
     trace: Optional[str] = None,
     boto_client_kwargs: Optional[Dict[str, Any]] = None,
+    use_system_cache: bool = False,
     **kwargs: Any,
 ) -> Any:
     """Use tenacity to retry the completion call."""
@@ -484,6 +493,8 @@ async def converse_with_retry_async(
     }
     if system_prompt:
         converse_kwargs["system"] = [{"text": system_prompt}]
+        if use_system_cache:
+            converse_kwargs["system"].append({"cachePoint": {"type": "default"}})
     if tool_config := kwargs.get("tools"):
         converse_kwargs["toolConfig"] = tool_config
     if guardrail_identifier and guardrail_version:
